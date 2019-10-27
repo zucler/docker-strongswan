@@ -9,6 +9,15 @@ RUN apt-get update && apt-get install -y \
   module-init-tools \
   supervisor
 
+RUN mkdir -p /usr/src/bird \
+    && cd /usr/src \
+    && curl -SOL ftp://bird.network.cz/pub/bird/bird-1.6.8.tar.gz \
+    && tar -zxf bird-1.6.8.tar.gz -C /usr/src/bird \
+    && cd bird \
+    && ./configure \
+    && make \
+    && make install
+
 ENV STRONGSWAN_VERSION 5.5.0
 ENV GPG_KEY 948F158A4E76A27BF3D07532DF42C170B34DBA77
 
@@ -62,6 +71,12 @@ ENV VPN_PASSWORD password
 ENV VPN_PSK password
 
 VOLUME ["/etc/ipsec.d"]
+
+ADD etc/strongswan.d/vti.conf /etc/strongswan.d/vti.conf
+ADD ipsec-vti.sh /var/lib/strongswan/ipsec-vti.sh
+RUN chmod +x /var/lib/strongswan/ipsec-vti.sh
+
+ADD bird.conf /etc/bird/bird.conf
 
 EXPOSE 4500/udp 500/udp 1701/udp
 
