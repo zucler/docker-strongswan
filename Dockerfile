@@ -5,20 +5,21 @@ RUN mkdir -p /conf
 RUN apt-get update && apt-get install -y \
   libgmp-dev \
   iptables \
-  xl2tpd \
+  # xl2tpd \
   module-init-tools \
-  supervisor
+  supervisor \
+  flex \
+  bison
 
-RUN mkdir -p /usr/src/bird \
-    && cd /usr/src \
+RUN cd /usr/src \
     && curl -SOL ftp://bird.network.cz/pub/bird/bird-1.6.8.tar.gz \
-    && tar -zxf bird-1.6.8.tar.gz -C /usr/src/bird \
-    && cd bird \
+    && tar -zxf bird-1.6.8.tar.gz \
+    && cd bird-1.6.8 \
     && ./configure \
     && make \
     && make install
 
-ENV STRONGSWAN_VERSION 5.5.0
+ENV STRONGSWAN_VERSION 5.8.1
 ENV GPG_KEY 948F158A4E76A27BF3D07532DF42C170B34DBA77
 
 RUN mkdir -p /usr/src/strongswan \
@@ -51,8 +52,8 @@ ADD ipsec.conf /etc/ipsec.conf
 ADD strongswan.conf /etc/strongswan.conf
 
 # XL2TPD Configuration
-ADD xl2tpd.conf /etc/xl2tpd/xl2tpd.conf
-ADD options.xl2tpd /etc/ppp/options.xl2tpd
+# ADD xl2tpd.conf /etc/xl2tpd/xl2tpd.conf
+# ADD options.xl2tpd /etc/ppp/options.xl2tpd
 
 # Supervisor config
 ADD supervisord.conf supervisord.conf
