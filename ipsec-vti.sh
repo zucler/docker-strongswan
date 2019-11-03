@@ -12,31 +12,34 @@ VTI_REMOTE=${2}
 VTI_LOCAL=${3}
 
 LOCAL_IF="${PLUTO_INTERFACE}"
-VTI_IF="vti${VTI_TUNNEL_ID}"
+VTI_IF="ipsec${VTI_TUNNEL_ID}"
 # GCP's MTU is 1460, so it's hardcoded
 GCP_MTU="1460"
 # ipsec overhead is 73 bytes, we need to compute new mtu.
 VTI_MTU=$((GCP_MTU-73))
 
+echo "Pluto connection: ${PLUTO_CONNECTION}"
+echo "Pluto protocol: ${PLUTO_PROTO}"
+echo "Pluto peer protocol: ${PLUTO_PEER_PROTOCOL}"
+
 case "${PLUTO_VERB}" in
     up-client)
+        set -x
         ${IP} link add ${VTI_IF} type vti local ${PLUTO_ME} remote ${PLUTO_PEER} okey ${PLUTO_MARK_OUT_ARR[0]} ikey ${PLUTO_MARK_IN_ARR[0]}
         ${IP} addr add ${VTI_LOCAL} remote ${VTI_REMOTE} dev "${VTI_IF}"
         ${IP} link set ${VTI_IF} up mtu ${VTI_MTU}
+        set +x
 
         # Disable IPSEC Policy
         sysctl -w net.ipv4.conf.${VTI_IF}.disable_policy=1
 
         # Enable loosy source validation, if possible. Otherwise disable validation.
         sysctl -w net.ipv4.conf.${VTI_IF}.rp_filter=2 || sysctl -w net.ipv4.conf.${VTI_IF}.rp_filter=0
-
-        # If you would like to use VTI for policy-based you shoud take care of routing by yourselv, e.x.
-        #if [[ "${PLUTO_PEER_CLIENT}" != "0.0.0.0/0" ]]; then
-        #    ${IP} r add "${PLUTO_PEER_CLIENT}" dev "${VTI_IF}"
-        #fi
         ;;
     down-client)
+        set -x
         ${IP} tunnel del "${VTI_IF}"
+        set +x
         ;;
 esac
 
